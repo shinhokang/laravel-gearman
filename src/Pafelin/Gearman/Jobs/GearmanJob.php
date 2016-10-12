@@ -27,14 +27,8 @@ class GearmanJob extends Job implements QueueJobInterface {
 
     public function fire(){
 
-        $startTime = time();
+        while($this->worker->work()) {
 
-        while($this->worker->work() || $this->worker->returnCode() == GEARMAN_TIMEOUT) {
-            // Check for expiry.
-            if((time() - $startTime) >= 60 * $this->maxRunTime) {
-                echo sprintf('%s minutes have elapsed, expiring.', $this->maxRunTime) . PHP_EOL;
-                break;
-            }
         }
     }
 
@@ -65,8 +59,9 @@ class GearmanJob extends Job implements QueueJobInterface {
     }
 
     public function onGearmanJob(\GearmanJob $job) {
+
         $this->rawPayload = $job->workload();
-        $this->fire(json_decode($this->rawPayload, true));
+        parent::fire();
     }
 
     /**
